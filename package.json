@@ -19,7 +19,6 @@
     "@prisma/client": "^5.22.0",
     "@react-three/drei": "^9.117.3",
     "@react-three/fiber": "^8.17.10",
-    "@react-three/postprocessing": "^3.0.4",
     "@studio-freight/lenis": "^1.0.42",
     "@types/three": "^0.184.1",
     "cloudinary": "^2.10.0",

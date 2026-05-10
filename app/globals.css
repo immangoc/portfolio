@@ -2,26 +2,369 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────
+   CSS Custom Properties
+───────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ivory: #F5F1EA;
+  --cream: #EFE8DC;
+  --champagne: #C9A961;
+  --bronze: #8B6F47;
+  --espresso: #1A1410;
+  --charcoal: #2B2520;
+  --rose: #D4A5A5;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-circ: cubic-bezier(0, 0.55, 0.45, 1);
+
+  --cursor-size: 8px;
+  --cursor-ring-size: 36px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─────────────────────────────────────────────
+   Base Reset
+───────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  cursor: none;
+  overflow-x: hidden;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--ivory);
+  color: var(--espresso);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode */
+.dark body {
+  background-color: var(--espresso);
+  color: var(--ivory);
+}
+
+/* ─────────────────────────────────────────────
+   Custom Cursor
+───────────────────────────────────────────── */
+* {
+  cursor: none !important;
+}
+
+/* ─────────────────────────────────────────────
+   Typography
+───────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* ─────────────────────────────────────────────
+   Scroll Progress Bar
+───────────────────────────────────────────── */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--champagne);
+  z-index: 9999;
+  transform-origin: left;
+  will-change: transform;
+}
+
+/* ─────────────────────────────────────────────
+   Lenis Smooth Scroll
+───────────────────────────────────────────── */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────
+   Loading Screen
+───────────────────────────────────────────── */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--espresso);
+}
+
+.curtain-panel {
+  position: fixed;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--espresso);
+  z-index: 9998;
+}
+
+/* ─────────────────────────────────────────────
+   Clip Path Reveals
+───────────────────────────────────────────── */
+.clip-reveal {
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 1s var(--ease-expo);
+}
+
+.clip-reveal.revealed {
+  clip-path: inset(0% 0 0 0);
+}
+
+/* ─────────────────────────────────────────────
+   Marquee
+───────────────────────────────────────────── */
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+}
+
+.marquee-content {
+  display: inline-flex;
+  animation: marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.marquee-content.reverse {
+  animation-direction: reverse;
+}
+
+/* ─────────────────────────────────────────────
+   Image Hover Effects
+───────────────────────────────────────────── */
+.img-hover-wrapper {
+  overflow: hidden;
+  position: relative;
+}
+
+.img-hover-wrapper img {
+  transition: transform 0.7s var(--ease-expo), filter 0.7s ease;
+  will-change: transform;
+}
+
+.img-hover-wrapper:hover img {
+  transform: scale(1.06);
+}
+
+/* ─────────────────────────────────────────────
+   Magnetic Button
+───────────────────────────────────────────── */
+.magnetic-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────
+   Gold Underline Hover
+───────────────────────────────────────────── */
+.gold-underline {
+  position: relative;
+}
+
+.gold-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--champagne);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s var(--ease-expo);
+}
+
+.gold-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ─────────────────────────────────────────────
+   Horizontal Scroll Section
+───────────────────────────────────────────── */
+.horizontal-scroll-section {
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────
+   Glass Morphism
+───────────────────────────────────────────── */
+.glass {
+  background: rgba(245, 241, 234, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 169, 97, 0.15);
+}
+
+.dark .glass {
+  background: rgba(26, 20, 16, 0.6);
+}
+
+/* ─────────────────────────────────────────────
+   Form Floating Labels
+───────────────────────────────────────────── */
+.form-group {
+  position: relative;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(139, 111, 71, 0.4);
+  padding: 20px 0 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+  color: inherit;
+}
+
+.form-group label {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bronze);
+  transition: all 0.3s var(--ease-expo);
+  pointer-events: none;
+}
+
+.form-group input:focus ~ label,
+.form-group input:not(:placeholder-shown) ~ label,
+.form-group textarea:focus ~ label,
+.form-group textarea:not(:placeholder-shown) ~ label {
+  top: 2px;
+  font-size: 0.7rem;
+  color: var(--champagne);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-bottom-color: var(--champagne);
+}
+
+/* ─────────────────────────────────────────────
+   Reduced Motion
+───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Utilities
+───────────────────────────────────────────── */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+
+  .writing-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Animations (supplements Tailwind config)
+───────────────────────────────────────────── */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes kenBurns {
+  0% { transform: scale(1) translateX(0); }
+  100% { transform: scale(1.08) translateX(-2%); }
+}
+
+.ken-burns {
+  animation: kenBurns 8s ease-in-out infinite alternate;
+}
+
+/* Scroll indicator line draw */
+@keyframes lineGrow {
+  0% { height: 0; }
+  50% { height: 40px; opacity: 1; }
+  100% { height: 0; opacity: 0; }
+}
+
+.scroll-line {
+  animation: lineGrow 2s ease-in-out infinite;
+}
+
+/* Split text char animation */
+.char {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.char-inner {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform 0.6s var(--ease-expo);
+}
+
+.char-inner.revealed {
+  transform: translateY(0);
 }

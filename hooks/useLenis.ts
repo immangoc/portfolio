@@ -5,10 +5,11 @@ import Lenis from "lenis";
 
 let globalLenis: Lenis | null = null;
 
-export function useLenis() {
+export function useLenis(disabled = false) {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    if (disabled) return;
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mediaQuery.matches) return;
 

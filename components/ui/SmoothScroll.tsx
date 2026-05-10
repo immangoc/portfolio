@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useLenis } from "@/hooks/useLenis";
 
 interface SmoothScrollProps {
@@ -7,6 +8,7 @@ interface SmoothScrollProps {
 }
 
 export function SmoothScroll({ children }: SmoothScrollProps) {
-  useLenis();
+  const pathname = usePathname();
+  useLenis(pathname.startsWith("/admin"));
   return <>{children}</>;
 }

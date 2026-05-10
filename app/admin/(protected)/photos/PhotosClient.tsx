@@ -164,6 +164,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewFiles, setPreviewFiles] = useState<File[]>([]);
+  const [showUploadPanel, setShowUploadPanel] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -315,12 +316,35 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+      {/* ── Mobile overlay backdrop ── */}
+      {showUploadPanel && (
+        <div
+          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+          onClick={() => setShowUploadPanel(false)}
+        />
+      )}
+
       {/* ── Left panel: upload + meta ── */}
-      <div className="w-72 shrink-0 border-r border-white/[0.06] flex flex-col overflow-y-auto">
-        <div className="p-6 border-b border-white/[0.06]">
-          <p className="text-[10px] tracking-[0.45em] text-champagne uppercase mb-1">Upload</p>
-          <p className="text-xs text-ivory/30">Drag files or click to select</p>
+      <div className={`
+        fixed bottom-0 left-0 right-0 z-40 max-h-[85vh] overflow-y-auto
+        md:static md:w-72 md:max-h-none md:z-auto
+        shrink-0 border-t md:border-t-0 md:border-r border-white/[0.06]
+        flex flex-col bg-[#0e0c0a]
+        transition-transform duration-300
+        ${showUploadPanel ? "translate-y-0" : "translate-y-full md:translate-y-0"}
+      `}>
+        <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
+          <div>
+            <p className="text-[10px] tracking-[0.45em] text-champagne uppercase mb-1">Upload</p>
+            <p className="text-xs text-ivory/30">Drag files or click to select</p>
+          </div>
+          <button
+            onClick={() => setShowUploadPanel(false)}
+            className="md:hidden text-ivory/30 hover:text-ivory text-xl leading-none p-1"
+          >
+            ✕
+          </button>
         </div>
 
         {/* Drop zone */}
@@ -463,7 +487,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       </div>
 
       {/* ── Right panel: photo grid ── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-w-0">
         {/* Category tabs */}
         <div className="sticky top-0 bg-[#0e0c0a] border-b border-white/[0.06] px-6 flex gap-1 z-10 overflow-x-auto">
           {/* Hero tab */}
@@ -547,7 +571,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       {/* ── Edit modal ── */}
       {editPhoto && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6" onClick={() => setEditPhoto(null)}>
-          <div className="bg-[#1a1410] border border-white/[0.08] rounded-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1a1410] border border-white/[0.08] rounded-xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto mx-3 md:mx-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <p className="text-[10px] tracking-[0.45em] text-champagne uppercase">Edit Photo</p>
               <button onClick={() => setEditPhoto(null)} className="text-ivory/30 hover:text-ivory text-lg leading-none">✕</button>
@@ -649,7 +673,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       {/* ── Delete confirm modal ── */}
       {deletePhoto && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6" onClick={() => setDeletePhoto(null)}>
-          <div className="bg-[#1a1410] border border-white/[0.08] rounded-xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1a1410] border border-white/[0.08] rounded-xl p-5 max-w-sm w-full mx-3 md:mx-0" onClick={(e) => e.stopPropagation()}>
             <p className="text-sm text-ivory/80 mb-2">Delete this photo?</p>
             <p className="text-xs text-ivory/35 mb-6">
               &ldquo;{deletePhoto.title || deletePhoto.alt}&rdquo; sẽ bị xóa khỏi Cloudinary và database.
@@ -666,9 +690,17 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
         </div>
       )}
 
+      {/* ── Floating upload button (mobile only) ── */}
+      <button
+        onClick={() => setShowUploadPanel(true)}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 md:hidden z-20 flex items-center gap-2 px-5 py-3 bg-champagne text-espresso text-xs tracking-widest uppercase rounded-full shadow-lg"
+      >
+        <span className="text-base leading-none">+</span> Upload
+      </button>
+
       {/* ── Toast ── */}
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg text-xs tracking-wider ${
+        <div className={`fixed bottom-20 md:bottom-6 right-6 z-50 px-4 py-3 rounded-lg text-xs tracking-wider ${
           toast.type === "ok" ? "bg-champagne text-espresso" : "bg-red-500 text-white"
         }`}>
           {toast.msg}

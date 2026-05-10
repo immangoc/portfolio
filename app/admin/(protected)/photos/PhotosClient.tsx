@@ -167,9 +167,12 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  const categoryPhotos = photos
-    .filter((p) => p.categorySlug === activeCategory)
-    .sort((a, b) => a.order - b.order);
+  const HERO_TAB = "__hero__";
+  const isHeroTab = activeCategory === HERO_TAB;
+
+  const categoryPhotos = isHeroTab
+    ? photos.filter((p) => p.featured).sort((a, b) => a.order - b.order)
+    : photos.filter((p) => p.categorySlug === activeCategory).sort((a, b) => a.order - b.order);
 
   function showToast(msg: string, type: "ok" | "err" = "ok") {
     setToast({ msg, type });
@@ -198,7 +201,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
         fd.append("camera", meta.camera);
         fd.append("lens", meta.lens);
         if (meta.iso) fd.append("iso", meta.iso);
-        fd.append("featured", String(meta.featured));
+        fd.append("featured", String(isHeroTab ? true : meta.featured));
 
         const res = await fetch("/api/upload", { method: "POST", body: fd });
         const data = await res.json();
@@ -462,7 +465,19 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       {/* ── Right panel: photo grid ── */}
       <div className="flex-1 overflow-y-auto">
         {/* Category tabs */}
-        <div className="sticky top-0 bg-[#0e0c0a] border-b border-white/[0.06] px-6 flex gap-1 z-10">
+        <div className="sticky top-0 bg-[#0e0c0a] border-b border-white/[0.06] px-6 flex gap-1 z-10 overflow-x-auto">
+          {/* Hero tab */}
+          <button
+            onClick={() => setActiveCategory(HERO_TAB)}
+            className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${
+              isHeroTab ? "text-bronze" : "text-ivory/35 hover:text-ivory/70"
+            }`}
+          >
+            ★ Hero
+            <span className="ml-1.5 text-[10px] opacity-50">({photos.filter((p) => p.featured).length})</span>
+            {isHeroTab && <span className="absolute bottom-0 left-0 right-0 h-px bg-bronze" />}
+          </button>
+          <div className="w-px my-3 bg-white/[0.08]" />
           {categories.map((cat) => {
             const count = photos.filter((p) => p.categorySlug === cat.slug).length;
             return (
@@ -487,11 +502,25 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
 
         {/* Grid */}
         <div className="p-6">
+          {isHeroTab && (
+            <div className="mb-6 px-4 py-3 rounded-lg bg-bronze/10 border border-bronze/20">
+              <p className="text-[10px] tracking-widest uppercase text-bronze mb-1">Hero Slideshow</p>
+              <p className="text-xs text-ivory/40">
+                Những ảnh bên dưới sẽ hiển thị luân phiên ở trang chủ. Bấm ★ trên bất kỳ ảnh nào trong các tab danh mục để thêm vào đây.
+              </p>
+            </div>
+          )}
           {categoryPhotos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 text-center">
-              <p className="text-4xl text-white/10 mb-4">◉</p>
-              <p className="text-sm text-ivory/25">No photos yet in this category</p>
-              <p className="text-xs text-ivory/15 mt-1">Drop files in the left panel to upload</p>
+              <p className="text-4xl text-white/10 mb-4">{isHeroTab ? "★" : "◉"}</p>
+              <p className="text-sm text-ivory/25">
+                {isHeroTab ? "Chưa có ảnh Hero" : "No photos yet in this category"}
+              </p>
+              <p className="text-xs text-ivory/15 mt-1">
+                {isHeroTab
+                  ? "Vào từng danh mục, bấm ★ trên ảnh để thêm vào Hero"
+                  : "Drop files in the left panel to upload"}
+              </p>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

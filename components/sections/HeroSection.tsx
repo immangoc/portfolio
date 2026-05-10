@@ -64,10 +64,10 @@ export function HeroSection({ slides: slidesProp }: { slides?: Slide[] } = {}) {
           <motion.div
             key={currentSlide}
             className="absolute inset-0"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1.12 }}
+            initial={{ opacity: 0, scale: 1.0 }}
+            animate={{ opacity: 1, scale: 1.04 }}
             exit={{ opacity: 0 }}
-            transition={{ opacity: { duration: 1.5 }, scale: { duration: 8, ease: "linear" } }}
+            transition={{ opacity: { duration: 1.5 }, scale: { duration: 10, ease: "linear" } }}
           >
             <Image
               src={heroSlides[currentSlide].src}
@@ -76,6 +76,7 @@ export function HeroSection({ slides: slidesProp }: { slides?: Slide[] } = {}) {
               className="object-cover"
               priority={currentSlide === 0}
               sizes="100vw"
+              quality={90}
             />
           </motion.div>
         </AnimatePresence>

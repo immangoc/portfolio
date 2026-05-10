@@ -49,7 +49,7 @@ export function HeroSection({ slides: slidesProp }: { slides?: Slide[] } = {}) {
     return () => clearInterval(id);
   }, [loaded, heroSlides.length]);
 
-  const titleChars = "Nguyệt Minh".split("");
+  const titleChars = Array.from("Nguyệt Minh");
 
   return (
     <>

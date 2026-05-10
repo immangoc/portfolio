@@ -6,9 +6,10 @@ export default async function AdminPhotosPage({
 }: {
   searchParams: { category?: string };
 }) {
-  const [categories, photos] = await Promise.all([
+  const [categories, photos, heroSlides] = await Promise.all([
     db.category.findMany({ orderBy: { slug: "asc" } }),
     db.photo.findMany({ orderBy: [{ categorySlug: "asc" }, { order: "asc" }] }),
+    db.heroSlide.findMany({ orderBy: { order: "asc" } }),
   ]);
 
   // Map slug → cloudinaryId of current hero for each category
@@ -23,6 +24,7 @@ export default async function AdminPhotosPage({
       initialPhotos={photos}
       defaultCategory={searchParams.category ?? categories[0]?.slug ?? "ao-dai"}
       heroMap={heroMap}
+      initialSlides={heroSlides}
     />
   );
 }

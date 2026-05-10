@@ -45,6 +45,30 @@ interface SortablePhotoProps {
   onSetHero: (photo: Photo) => void;
 }
 
+function SortableSlide({ slide, index, onDelete }: { slide: { id: string; src: string; alt: string; order: number; cloudinaryId: string }; index: number; onDelete: (s: { id: string; src: string; alt: string; order: number; cloudinaryId: string }) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="group relative bg-white/[0.04] border border-white/[0.06] rounded-lg overflow-hidden">
+      <div {...attributes} {...listeners} className="absolute top-2 left-2 z-10 w-6 h-6 bg-black/50 rounded flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-white/50 text-xs leading-none select-none">⠿</span>
+      </div>
+      <div className="absolute top-2 right-2 z-10">
+        <div className="px-1.5 py-0.5 bg-champagne/80 text-espresso text-[9px] tracking-widest uppercase rounded">
+          {index + 1}
+        </div>
+      </div>
+      <div className="aspect-video relative bg-white/[0.02]">
+        <Image src={slide.src} alt={slide.alt} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+      </div>
+      <div className="p-3 flex items-center justify-between">
+        <p className="text-xs text-ivory/60 truncate flex-1">{slide.alt}</p>
+        <button onClick={() => onDelete(slide)} className="ml-2 text-[10px] text-red-400/50 hover:text-red-400 transition-colors">✕</button>
+      </div>
+    </div>
+  );
+}
+
 function SortablePhoto({ photo, isHero, onEdit, onDelete, onToggleFeatured, onSetHero }: SortablePhotoProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: photo.id });
@@ -142,14 +166,23 @@ function SortablePhoto({ photo, isHero, onEdit, onDelete, onToggleFeatured, onSe
   );
 }
 
+interface HeroSlide {
+  id: string;
+  cloudinaryId: string;
+  src: string;
+  alt: string;
+  order: number;
+}
+
 interface Props {
   categories: Category[];
   initialPhotos: Photo[];
   defaultCategory: string;
-  heroMap: Record<string, string>; // slug → cloudinaryId of current hero
+  heroMap: Record<string, string>;
+  initialSlides: HeroSlide[];
 }
 
-export function PhotosClient({ categories, initialPhotos, defaultCategory, heroMap: initialHeroMap }: Props) {
+export function PhotosClient({ categories, initialPhotos, defaultCategory, heroMap: initialHeroMap, initialSlides }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [activeCategory, setActiveCategory] = useState(defaultCategory);
@@ -163,13 +196,18 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
   const [deletePhoto, setDeletePhoto] = useState<Photo | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const slideFileInputRef = useRef<HTMLInputElement>(null);
   const [previewFiles, setPreviewFiles] = useState<File[]>([]);
   const [showUploadPanel, setShowUploadPanel] = useState(false);
+  const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
+  const [slideUploading, setSlideUploading] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const HERO_TAB = "__hero__";
+  const SLIDESHOW_TAB = "__slideshow__";
   const isHeroTab = activeCategory === HERO_TAB;
+  const isSlideshowTab = activeCategory === SLIDESHOW_TAB;
 
   const categoryPhotos = isHeroTab
     ? photos.filter((p) => p.featured).sort((a, b) => a.order - b.order)
@@ -293,6 +331,47 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
     } else {
       showToast("Failed to set hero", "err");
     }
+  }
+
+  async function handleSlideUpload(files: File[]) {
+    if (!files.length) return;
+    setSlideUploading(true);
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("alt", file.name.replace(/\.[^.]+$/, ""));
+      const res = await fetch("/api/slides", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.slide) setSlides((prev) => [...prev, data.slide]);
+    }
+    setSlideUploading(false);
+    showToast("Slide uploaded");
+    startTransition(() => router.refresh());
+  }
+
+  async function handleSlideDelete(slide: HeroSlide) {
+    const res = await fetch(`/api/slides/${slide.id}`, { method: "DELETE" });
+    if (res.ok) {
+      setSlides((prev) => prev.filter((s) => s.id !== slide.id));
+      showToast("Slide deleted");
+      startTransition(() => router.refresh());
+    } else {
+      showToast("Delete failed", "err");
+    }
+  }
+
+  async function handleSlideDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = slides.findIndex((s) => s.id === active.id);
+    const newIndex = slides.findIndex((s) => s.id === over.id);
+    const reordered = arrayMove(slides, oldIndex, newIndex);
+    setSlides(reordered.map((s, i) => ({ ...s, order: i })));
+    await fetch("/api/slides/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reordered.map((s) => s.id) }),
+    });
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -490,6 +569,17 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       <div className="flex-1 overflow-y-auto min-w-0">
         {/* Category tabs */}
         <div className="sticky top-0 bg-[#0e0c0a] border-b border-white/[0.06] px-6 flex gap-1 z-10 overflow-x-auto">
+          {/* Slideshow tab */}
+          <button
+            onClick={() => setActiveCategory(SLIDESHOW_TAB)}
+            className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${
+              isSlideshowTab ? "text-champagne" : "text-ivory/35 hover:text-ivory/70"
+            }`}
+          >
+            ▶ Slideshow
+            <span className="ml-1.5 text-[10px] opacity-50">({slides.length})</span>
+            {isSlideshowTab && <span className="absolute bottom-0 left-0 right-0 h-px bg-champagne" />}
+          </button>
           {/* Hero tab */}
           <button
             onClick={() => setActiveCategory(HERO_TAB)}
@@ -497,7 +587,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
               isHeroTab ? "text-bronze" : "text-ivory/35 hover:text-ivory/70"
             }`}
           >
-            ★ Hero
+            ★ Featured
             <span className="ml-1.5 text-[10px] opacity-50">({photos.filter((p) => p.featured).length})</span>
             {isHeroTab && <span className="absolute bottom-0 left-0 right-0 h-px bg-bronze" />}
           </button>
@@ -526,44 +616,102 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
 
         {/* Grid */}
         <div className="p-6">
-          {isHeroTab && (
-            <div className="mb-6 px-4 py-3 rounded-lg bg-bronze/10 border border-bronze/20">
-              <p className="text-[10px] tracking-widest uppercase text-bronze mb-1">Hero Slideshow</p>
-              <p className="text-xs text-ivory/40">
-                Những ảnh bên dưới sẽ hiển thị luân phiên ở trang chủ. Bấm ★ trên bất kỳ ảnh nào trong các tab danh mục để thêm vào đây.
-              </p>
-            </div>
-          )}
-          {categoryPhotos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 text-center">
-              <p className="text-4xl text-white/10 mb-4">{isHeroTab ? "★" : "◉"}</p>
-              <p className="text-sm text-ivory/25">
-                {isHeroTab ? "Chưa có ảnh Hero" : "No photos yet in this category"}
-              </p>
-              <p className="text-xs text-ivory/15 mt-1">
-                {isHeroTab
-                  ? "Vào từng danh mục, bấm ★ trên ảnh để thêm vào Hero"
-                  : "Drop files in the left panel to upload"}
-              </p>
-            </div>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={categoryPhotos.map((p) => p.id)} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {categoryPhotos.map((photo) => (
-                    <SortablePhoto
-                      key={photo.id}
-                      photo={photo}
-                      isHero={heroMap[photo.categorySlug] === photo.cloudinaryId}
-                      onEdit={setEditPhoto}
-                      onDelete={setDeletePhoto}
-                      onToggleFeatured={handleToggleFeatured}
-                      onSetHero={handleSetHero}
-                    />
-                  ))}
+          {/* ── Slideshow tab content ── */}
+          {isSlideshowTab ? (
+            <>
+              <div className="mb-6 px-4 py-3 rounded-lg bg-champagne/10 border border-champagne/20">
+                <p className="text-[10px] tracking-widest uppercase text-champagne mb-1">▶ Hero Slideshow</p>
+                <p className="text-xs text-ivory/40">Ảnh xuất hiện luân phiên trên trang chủ. Kéo thả để đổi thứ tự.</p>
+              </div>
+
+              {/* Slide upload zone */}
+              <div
+                className="mb-6 border-2 border-dashed border-white/10 hover:border-champagne/30 rounded-lg p-8 text-center cursor-pointer transition-colors"
+                onClick={() => slideFileInputRef.current?.click()}
+              >
+                <input
+                  ref={slideFileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (files.length) handleSlideUpload(files);
+                    e.target.value = "";
+                  }}
+                />
+                {slideUploading ? (
+                  <p className="text-xs text-ivory/40">Đang upload...</p>
+                ) : (
+                  <>
+                    <p className="text-2xl text-white/20 mb-2">+</p>
+                    <p className="text-xs text-ivory/30">Bấm để chọn ảnh slide</p>
+                  </>
+                )}
+              </div>
+
+              {slides.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <p className="text-4xl text-white/10 mb-4">▶</p>
+                  <p className="text-sm text-ivory/25">Chưa có slide nào</p>
+                  <p className="text-xs text-ivory/15 mt-1">Upload ảnh bên trên để thêm vào slideshow</p>
                 </div>
-              </SortableContext>
-            </DndContext>
+              ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSlideDragEnd}>
+                  <SortableContext items={slides.map((s) => s.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {slides.map((slide, i) => (
+                        <SortableSlide
+                          key={slide.id}
+                          slide={slide}
+                          index={i}
+                          onDelete={handleSlideDelete}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </>
+          ) : (
+            <>
+              {isHeroTab && (
+                <div className="mb-6 px-4 py-3 rounded-lg bg-bronze/10 border border-bronze/20">
+                  <p className="text-[10px] tracking-widest uppercase text-bronze mb-1">★ Featured</p>
+                  <p className="text-xs text-ivory/40">Ảnh được đánh dấu ★ trong các danh mục. Dùng cho Featured Work section.</p>
+                </div>
+              )}
+              {categoryPhotos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32 text-center">
+                  <p className="text-4xl text-white/10 mb-4">{isHeroTab ? "★" : "◉"}</p>
+                  <p className="text-sm text-ivory/25">
+                    {isHeroTab ? "Chưa có ảnh Featured" : "No photos yet in this category"}
+                  </p>
+                  <p className="text-xs text-ivory/15 mt-1">
+                    {isHeroTab ? "Vào từng danh mục, bấm ★ trên ảnh" : "Drop files in the left panel to upload"}
+                  </p>
+                </div>
+              ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={categoryPhotos.map((p) => p.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {categoryPhotos.map((photo) => (
+                        <SortablePhoto
+                          key={photo.id}
+                          photo={photo}
+                          isHero={heroMap[photo.categorySlug] === photo.cloudinaryId}
+                          onEdit={setEditPhoto}
+                          onDelete={setDeletePhoto}
+                          onToggleFeatured={handleToggleFeatured}
+                          onSetHero={handleSetHero}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </>
           )}
         </div>
       </div>

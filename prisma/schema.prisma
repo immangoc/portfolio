@@ -30,6 +30,15 @@ model Photo {
   updatedAt    DateTime @updatedAt
 }
 
+model HeroSlide {
+  id           String   @id @default(cuid())
+  cloudinaryId String   @unique
+  src          String
+  alt          String
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
 model Category {
   slug          String  @id
   title         String

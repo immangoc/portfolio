@@ -490,6 +490,8 @@ export const navLinks = [
 ];
 
 // ─── Hero slides ─────────────────────────────────────────────────────────
+// Thay các URL bên dưới bằng link ảnh Cloudinary của bạn
+// Sau khi upload ảnh lên admin, lấy URL từ Cloudinary dashboard
 export const heroSlides = [
   {
     src: "https://images.unsplash.com/photo-1607462109225-6b64ae2dd3cb?w=1920&q=85",

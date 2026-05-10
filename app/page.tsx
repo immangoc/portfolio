@@ -19,8 +19,9 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // Fetch all data in parallel
-  const [featuredDbPhotos, ...heroImages] = await Promise.all([
+  const [featuredDbPhotos, heroSlidesDb, ...heroImages] = await Promise.all([
     db.photo.findMany({ where: { featured: true }, orderBy: { order: "asc" }, take: 8 }),
+    db.heroSlide.findMany({ orderBy: { order: "asc" } }),
     ...portfolioCategories.map((cat) => getCategoryHeroImage(cat.slug)),
   ]);
 
@@ -30,14 +31,10 @@ export default async function Home() {
     heroImage: heroImages[i] ?? cat.heroImage,
   }));
 
-  // Hero slides: use first photo of each category if available, else static slides
-  const dbSlides = heroImages
-    .map((url, i) =>
-      url ? { src: url, alt: portfolioCategories[i].title } : null
-    )
-    .filter(Boolean) as { src: string; alt: string }[];
-
-  const slides = dbSlides.length >= 2 ? dbSlides : staticSlides;
+  // Hero slides: use DB slides if available, else static slides
+  const slides = heroSlidesDb.length > 0
+    ? heroSlidesDb.map((s: { src: string; alt: string }) => ({ src: s.src, alt: s.alt }))
+    : staticSlides;
 
   // Featured images: use DB photos if available
   const featuredImages =

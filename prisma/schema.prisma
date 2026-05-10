@@ -40,6 +40,15 @@ model AboutContent {
   bio3         String?
 }
 
+model Milestone {
+  id      String @id @default(cuid())
+  year    String
+  title   String
+  titleVi String
+  body    String
+  order   Int    @default(0)
+}
+
 model HeroSlide {
   id           String   @id @default(cuid())
   cloudinaryId String   @unique

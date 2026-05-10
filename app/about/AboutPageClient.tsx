@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRef } from "react";
 import { RevealText } from "@/components/ui/RevealText";
 import { CountUp } from "@/components/ui/CountUp";
@@ -9,40 +9,51 @@ import { FloatingPolaroids } from "@/components/3d/FloatingPolaroids";
 import { stats } from "@/data/portfolio";
 import { CTASection } from "@/components/sections/CTASection";
 
-const timeline = [
+const DEFAULT_MILESTONES = [
   {
+    id: "d1",
     year: "2016",
     title: "First Click",
     titleVi: "Lần Chụp Đầu Tiên",
     body: "Borrowed my sister's Canon 550D and fell irreversibly in love with light.",
+    order: 0,
   },
   {
+    id: "d2",
     year: "2018",
     title: "First Exhibition",
     titleVi: "Triển Lãm Đầu Tiên",
     body: "Exhibited at Hanoi Fine Arts Museum — 30 portraits, sold out opening night.",
+    order: 1,
   },
   {
+    id: "d3",
     year: "2020",
     title: "Studio Founded",
     titleVi: "Thành Lập Studio",
     body: "Opened my first dedicated studio in Ho Chi Minh City.",
+    order: 2,
   },
   {
+    id: "d4",
     year: "2022",
     title: "International Feature",
     titleVi: "Báo Quốc Tế",
     body: "Featured in Vogue Vietnam & Harper's Bazaar Vietnam.",
+    order: 3,
   },
   {
+    id: "d5",
     year: "2024",
     title: "Today",
     titleVi: "Hôm Nay",
     body: "500+ sessions, clients across Vietnam and Southeast Asia.",
+    order: 4,
   },
 ];
 
 interface AboutData { photoUrl?: string | null; quote?: string | null; bio1?: string | null; bio2?: string | null; bio3?: string | null; }
+interface MilestoneItem { id: string; year: string; title: string; titleVi: string; body: string; order: number; }
 
 const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=85";
 const DEFAULT_QUOTE = "Tôi tin rằng mỗi người đều có một câu chuyện xứng đáng được kể — và ánh sáng là ngôn ngữ tôi dùng để kể những câu chuyện đó.";
@@ -50,7 +61,8 @@ const DEFAULT_BIO1 = "Sinh ra tại Hà Nội, lớn lên giữa những con ph�
 const DEFAULT_BIO2 = "Sau hơn 6 năm cầm máy, từ những buổi sáng sớm trên ruộng bậc thang Mù Cang Chải đến những đêm khuya trong studio ở Sài Gòn, tôi hiểu rằng nhiếp ảnh không phải là việc bấm nút — mà là việc nhìn thấy linh hồn của người đứng trước ống kính.";
 const DEFAULT_BIO3 = "Chuyên môn của tôi là áo dài, portrait nghệ thuật, ảnh cưới, và kỷ yếu. Nhưng điều tôi thực sự làm là lưu giữ những khoảnh khắc mà bạn sẽ muốn nhìn lại mười năm sau và thấy mình trong đó.";
 
-export function AboutPageClient({ content = {} }: { content?: AboutData }) {
+export function AboutPageClient({ content = {}, milestones: milestonesFromDB = [] }: { content?: AboutData; milestones?: MilestoneItem[] }) {
+  const timeline = milestonesFromDB.length > 0 ? milestonesFromDB : DEFAULT_MILESTONES;
   const photo = content.photoUrl ?? DEFAULT_PHOTO;
   const quote = content.quote ?? DEFAULT_QUOTE;
   const bio1 = content.bio1 ?? DEFAULT_BIO1;
@@ -244,7 +256,7 @@ export function AboutPageClient({ content = {} }: { content?: AboutData }) {
 
           {timeline.map((item, i) => (
             <motion.div
-              key={item.year}
+              key={item.id}
               className={`relative grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 pl-8 md:pl-0 ${
                 i % 2 === 0 ? "md:pr-16" : "md:pl-16 md:[grid-template-columns:1fr_1fr]"
               }`}

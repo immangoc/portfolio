@@ -11,6 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const content = await db.aboutContent.findUnique({ where: { id: "main" } });
-  return <AboutPageClient content={content ?? {}} />;
+  const [content, milestones] = await Promise.all([
+    db.aboutContent.findUnique({ where: { id: "main" } }),
+    db.milestone.findMany({ orderBy: { order: "asc" } }),
+  ]);
+  return <AboutPageClient content={content ?? {}} milestones={milestones} />;
 }

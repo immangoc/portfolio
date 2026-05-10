@@ -61,6 +61,11 @@ body {
   cursor: none !important;
 }
 
+.admin-layout,
+.admin-layout * {
+  cursor: auto !important;
+}
+
 /* ─────────────────────────────────────────────
    Typography
 ───────────────────────────────────────────── */

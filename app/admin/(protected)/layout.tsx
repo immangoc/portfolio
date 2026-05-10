@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!session) redirect("/admin/login");
 
   return (
-    <div className="min-h-screen bg-[#0e0c0a] text-ivory flex">
+    <div className="admin-layout min-h-screen bg-[#0e0c0a] text-ivory flex">
       <AdminNav />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>

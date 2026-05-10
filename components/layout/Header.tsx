@@ -27,6 +27,8 @@ export function Header() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <>
       <header

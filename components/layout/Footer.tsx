@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { Marquee } from "@/components/ui/Marquee";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return null;
+
   const year = new Date().getFullYear();
 
   return (

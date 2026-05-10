@@ -16,8 +16,8 @@ export default async function AdminDashboard() {
   const featuredCount = await db.photo.count({ where: { featured: true } });
 
   return (
-    <div className="p-10">
-      <div className="mb-10">
+    <div className="p-5 md:p-10">
+      <div className="mb-8 md:mb-10">
         <p className="text-[10px] tracking-[0.5em] text-champagne uppercase mb-2">
           Welcome back
         </p>

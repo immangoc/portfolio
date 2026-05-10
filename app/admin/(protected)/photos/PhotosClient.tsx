@@ -395,19 +395,19 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-3rem)] md:h-screen overflow-hidden">
       {/* ── Mobile overlay backdrop ── */}
       {showUploadPanel && (
         <div
-          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+          className="fixed inset-0 bg-black/60 z-[45] md:hidden"
           onClick={() => setShowUploadPanel(false)}
         />
       )}
 
       {/* ── Left panel: upload + meta ── */}
       <div className={`
-        fixed bottom-0 left-0 right-0 z-40 max-h-[85vh] overflow-y-auto
-        md:static md:w-72 md:max-h-none md:z-auto
+        fixed bottom-16 left-0 right-0 z-[46] max-h-[75vh] overflow-y-auto
+        md:static md:bottom-auto md:w-72 md:max-h-none md:z-auto
         shrink-0 border-t md:border-t-0 md:border-r border-white/[0.06]
         flex flex-col bg-[#0e0c0a]
         transition-transform duration-300
@@ -568,7 +568,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       {/* ── Right panel: photo grid ── */}
       <div className="flex-1 overflow-y-auto min-w-0">
         {/* Category tabs */}
-        <div className="sticky top-0 bg-[#0e0c0a] border-b border-white/[0.06] px-6 flex gap-1 z-10 overflow-x-auto">
+        <div className="sticky top-0 md:top-0 bg-[#0e0c0a] border-b border-white/[0.06] px-3 md:px-6 flex gap-1 z-10 overflow-x-auto">
           {/* Slideshow tab */}
           <button
             onClick={() => setActiveCategory(SLIDESHOW_TAB)}
@@ -615,7 +615,7 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
         </div>
 
         {/* Grid */}
-        <div className="p-6">
+        <div className="p-3 md:p-6">
           {/* ── Slideshow tab content ── */}
           {isSlideshowTab ? (
             <>
@@ -841,14 +841,14 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       {/* ── Floating upload button (mobile only) ── */}
       <button
         onClick={() => setShowUploadPanel(true)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 md:hidden z-20 flex items-center gap-2 px-5 py-3 bg-champagne text-espresso text-xs tracking-widest uppercase rounded-full shadow-lg"
+        className="fixed bottom-[4.5rem] left-1/2 -translate-x-1/2 md:hidden z-40 flex items-center gap-2 px-5 py-2.5 bg-champagne text-espresso text-xs tracking-widest uppercase rounded-full shadow-lg"
       >
         <span className="text-base leading-none">+</span> Upload
       </button>
 
       {/* ── Toast ── */}
       {toast && (
-        <div className={`fixed bottom-20 md:bottom-6 right-6 z-50 px-4 py-3 rounded-lg text-xs tracking-wider ${
+        <div className={`fixed bottom-[5.5rem] md:bottom-6 right-4 z-50 px-4 py-3 rounded-lg text-xs tracking-wider ${
           toast.type === "ok" ? "bg-champagne text-espresso" : "bg-red-500 text-white"
         }`}>
           {toast.msg}

@@ -14,7 +14,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <div className="admin-layout min-h-screen bg-[#0e0c0a] text-ivory flex">
       <AdminNav />
-      <main className="flex-1 overflow-auto">{children}</main>
+      {/* pt-12 = mobile top bar, pb-16 = mobile bottom tab bar */}
+      <main className="flex-1 overflow-auto pt-12 pb-16 md:pt-0 md:pb-0">
+        {children}
+      </main>
     </div>
   );
 }

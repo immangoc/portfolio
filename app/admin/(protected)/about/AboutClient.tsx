@@ -148,7 +148,7 @@ export function AboutClient({
   const fieldCls = "w-full bg-white/[0.04] border border-white/[0.08] rounded px-3 py-2 text-sm text-ivory/80 placeholder-ivory/20 outline-none focus:border-champagne/40 transition-colors";
 
   return (
-    <div className="max-w-2xl mx-auto p-6 md:p-10 space-y-10">
+    <div className="max-w-2xl mx-auto p-4 md:p-10 space-y-8 md:space-y-10">
       <div>
         <p className="text-[10px] tracking-[0.45em] text-champagne uppercase mb-1">About</p>
         <p className="text-xs text-ivory/30">Chỉnh sửa nội dung trang Về Tôi</p>

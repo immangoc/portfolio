@@ -5,6 +5,6 @@ export default withAuth({
 });
 
 export const config = {
-  // Protect /admin and all sub-paths EXCEPT /admin/login
-  matcher: ["/admin", "/admin/((?!login).*)"],
+  // Protect /admin sub-paths EXCEPT /admin/login and /api/auth
+  matcher: ["/admin/((?!login).*)"],
 };

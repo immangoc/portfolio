@@ -47,7 +47,7 @@ export function HeroSection({ slides: slidesProp }: { slides?: Slide[] } = {}) {
       setCurrentSlide((s) => (s + 1) % heroSlides.length);
     }, 7000);
     return () => clearInterval(id);
-  }, [loaded]);
+  }, [loaded, heroSlides.length]);
 
   const titleChars = "Nguyệt Minh".split("");
 

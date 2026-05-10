@@ -70,7 +70,7 @@ export function FeaturedWork({ images: imagesProp }: { images?: PortfolioImage[]
       {/* Marquee strip */}
       <div className="mt-16 border-t border-b border-bronze/20 py-4">
         <Marquee
-          text="ÁODÀI • NANGTHO • CUOI • KYIEU • FINEART • VIETNAM"
+          text="ÁO DÀI • NÀNG THƠ • CƯỚI • KỶ YẾU • FINE ART • VIETNAM"
           className="font-display italic text-xl text-bronze/30"
         />
       </div>

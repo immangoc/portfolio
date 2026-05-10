@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
   const year = parseInt(formData.get("year") as string) || new Date().getFullYear();
   const camera = (formData.get("camera") as string) || undefined;
   const lens = (formData.get("lens") as string) || undefined;
-  const iso = formData.get("iso") ? parseInt(formData.get("iso") as string) : undefined;
+  const isoRaw = formData.get("iso") as string;
+  const iso = isoRaw && !isNaN(parseInt(isoRaw)) ? parseInt(isoRaw) : undefined;
   const featured = formData.get("featured") === "true";
 
   let mood: string[] = [];

@@ -93,7 +93,7 @@ export function HeroSection({ slides: slidesProp }: { slides?: Slide[] } = {}) {
             <>
               {/* Photographer name — staggered char reveal */}
               <div className="overflow-hidden mb-4">
-                <div className="flex justify-center flex-wrap gap-[1px]">
+                <div className="flex justify-center flex-wrap gap-[1px] pb-3">
                   {titleChars.map((char, i) => (
                     <motion.span
                       key={i}

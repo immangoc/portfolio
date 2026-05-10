@@ -187,7 +187,7 @@ export function AboutPageClient({ content = {}, milestones: milestonesFromDB = [
       </div>
 
       {/* Stats */}
-      <div className="bg-espresso py-20 px-6 md:px-16 grid grid-cols-2 md:grid-cols-4 gap-12">
+      <div className="bg-espresso py-20 px-6 md:px-16 flex flex-wrap justify-center gap-x-24 gap-y-12">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}

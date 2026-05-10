@@ -19,7 +19,6 @@ export function CursorFollower() {
   useEffect(() => {
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
     if (isTouchDevice) return;
-    if (pathname.startsWith("/admin")) return;
 
     const moveCursor = (e: MouseEvent) => {
       dotX.set(e.clientX);

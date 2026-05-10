@@ -26,7 +26,6 @@ export async function uploadToCloudinary(
         folder: options.folder ?? "portfolio",
         public_id: options.public_id,
         resource_type: "image",
-        transformation: [{ quality: "auto", fetch_format: "auto" }],
       },
       (error, result) => {
         if (error || !result) return reject(error ?? new Error("Upload failed"));

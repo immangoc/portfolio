@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 
 export function CursorFollower() {
+  const pathname = usePathname();
   const dotX = useMotionValue(-100);
   const dotY = useMotionValue(-100);
 
@@ -17,6 +19,7 @@ export function CursorFollower() {
   useEffect(() => {
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
     if (isTouchDevice) return;
+    if (pathname.startsWith("/admin")) return;
 
     const moveCursor = (e: MouseEvent) => {
       dotX.set(e.clientX);
@@ -53,6 +56,8 @@ export function CursorFollower() {
       });
     };
   }, [dotX, dotY]);
+
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <>

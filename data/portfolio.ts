@@ -472,8 +472,7 @@ export const testimonials: Testimonial[] = [
 // ─── Stats ────────────────────────────────────────────────────────────────
 export const stats = [
   { value: 500, suffix: "+", label: "Shoots", labelVi: "Buổi Chụp" },
-  { value: 8, suffix: "", label: "Years", labelVi: "Năm Kinh Nghiệm" },
-  { value: 50, suffix: "+", label: "Awards", labelVi: "Giải Thưởng" },
+  { value: 6, suffix: "", label: "Years", labelVi: "Năm Kinh Nghiệm" },
   { value: 12, suffix: "", label: "Cities", labelVi: "Thành Phố" },
 ];
 
@@ -485,7 +484,6 @@ export const navLinks = [
   { href: "/portfolio/wedding", label: "Wedding", labelVi: "Cưới" },
   { href: "/portfolio/ky-yeu", label: "Kỷ Yếu", labelVi: "Kỷ Yếu" },
   { href: "/about", label: "About", labelVi: "Về Tôi" },
-  { href: "/journal", label: "Journal", labelVi: "Nhật Ký" },
   { href: "/contact", label: "Contact", labelVi: "Liên Hệ" },
 ];
 

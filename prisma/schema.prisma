@@ -30,6 +30,16 @@ model Photo {
   updatedAt    DateTime @updatedAt
 }
 
+model AboutContent {
+  id           String  @id @default("main")
+  photoUrl     String?
+  photoCloudId String?
+  quote        String?
+  bio1         String?
+  bio2         String?
+  bio3         String?
+}
+
 model HeroSlide {
   id           String   @id @default(cuid())
   cloudinaryId String   @unique

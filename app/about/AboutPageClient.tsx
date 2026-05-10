@@ -42,7 +42,20 @@ const timeline = [
   },
 ];
 
-export function AboutPageClient() {
+interface AboutData { photoUrl?: string | null; quote?: string | null; bio1?: string | null; bio2?: string | null; bio3?: string | null; }
+
+const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=85";
+const DEFAULT_QUOTE = "Tôi tin rằng mỗi người đều có một câu chuyện xứng đáng được kể — và ánh sáng là ngôn ngữ tôi dùng để kể những câu chuyện đó.";
+const DEFAULT_BIO1 = "Sinh ra tại Hà Nội, lớn lên giữa những con phố cổ và ánh đèn hội hè, tôi sớm học được rằng cái đẹp ẩn mình trong từng khoảnh khắc bình thường nhất.";
+const DEFAULT_BIO2 = "Sau hơn 6 năm cầm máy, từ những buổi sáng sớm trên ruộng bậc thang Mù Cang Chải đến những đêm khuya trong studio ở Sài Gòn, tôi hiểu rằng nhiếp ảnh không phải là việc bấm nút — mà là việc nhìn thấy linh hồn của người đứng trước ống kính.";
+const DEFAULT_BIO3 = "Chuyên môn của tôi là áo dài, portrait nghệ thuật, ảnh cưới, và kỷ yếu. Nhưng điều tôi thực sự làm là lưu giữ những khoảnh khắc mà bạn sẽ muốn nhìn lại mười năm sau và thấy mình trong đó.";
+
+export function AboutPageClient({ content = {} }: { content?: AboutData }) {
+  const photo = content.photoUrl ?? DEFAULT_PHOTO;
+  const quote = content.quote ?? DEFAULT_QUOTE;
+  const bio1 = content.bio1 ?? DEFAULT_BIO1;
+  const bio2 = content.bio2 ?? DEFAULT_BIO2;
+  const bio3 = content.bio3 ?? DEFAULT_BIO3;
   const stickyRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +97,7 @@ export function AboutPageClient() {
             className="relative md:sticky md:top-0 h-[60vh] md:h-screen overflow-hidden"
           >
             <Image
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=85"
+              src={photo}
               alt="Nguyệt Minh"
               fill
               className="object-cover"
@@ -111,8 +124,7 @@ export function AboutPageClient() {
               className="mb-12"
             >
               <p className="font-display text-2xl md:text-3xl text-espresso leading-relaxed italic mb-6">
-                "Tôi tin rằng mỗi người đều có một câu chuyện xứng đáng được kể —
-                và ánh sáng là ngôn ngữ tôi dùng để kể những câu chuyện đó."
+                &ldquo;{quote}&rdquo;
               </p>
               <p className="text-sm text-charcoal/60 leading-relaxed">
                 I believe every person carries a story worthy of being told —
@@ -127,20 +139,9 @@ export function AboutPageClient() {
               transition={{ delay: 0.1, duration: 0.8 }}
               className="space-y-6 text-sm text-charcoal/70 leading-relaxed"
             >
-              <p>
-                Sinh ra tại Hà Nội, lớn lên giữa những con phố cổ và ánh đèn hội hè,
-                tôi sớm học được rằng cái đẹp ẩn mình trong từng khoảnh khắc bình thường nhất.
-              </p>
-              <p>
-                Sau hơn 8 năm cầm máy, từ những buổi sáng sớm trên ruộng bậc thang Mù Cang Chải
-                đến những đêm khuya trong studio ở Sài Gòn, tôi hiểu rằng nhiếp ảnh không phải là
-                việc bấm nút — mà là việc nhìn thấy linh hồn của người đứng trước ống kính.
-              </p>
-              <p>
-                Chuyên môn của tôi là áo dài, portrait nghệ thuật, ảnh cưới, và kỷ yếu.
-                Nhưng điều tôi thực sự làm là lưu giữ những khoảnh khắc mà bạn sẽ muốn nhìn lại
-                mười năm sau và thấy mình trong đó.
-              </p>
+              <p>{bio1}</p>
+              <p>{bio2}</p>
+              <p>{bio3}</p>
             </motion.div>
 
             {/* Skills tags */}

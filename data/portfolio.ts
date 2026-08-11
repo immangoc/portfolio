@@ -25,7 +25,7 @@ export interface PortfolioCategory {
   titleVi: string;
   description: string;
   descriptionVi: string;
-  heroImage: string;
+  heroImage: string | null;
   accentColor: string;
   tone: string;
   images: PortfolioImage[];
@@ -381,62 +381,6 @@ const kyYeuImages: PortfolioImage[] = [
   },
 ];
 
-// ─── Category definitions ────────────────────────────────────────────────
-export const portfolioCategories: PortfolioCategory[] = [
-  {
-    id: "ao-dai",
-    slug: "ao-dai",
-    title: "Áo Dài",
-    titleVi: "Áo Dài Truyền Thống",
-    description: "The timeless elegance of Vietnamese traditional dress, captured in light and soul.",
-    descriptionVi: "Vẻ đẹp trường tồn của trang phục truyền thống Việt Nam, được lưu giữ qua ánh sáng và tâm hồn.",
-    heroImage: "https://images.unsplash.com/photo-1607462109225-6b64ae2dd3cb?w=1920&q=85",
-    accentColor: "#D4A5A5",
-    tone: "Dusty Rose · Hồng Pastel · Truyền Thống",
-    images: aoDaiImages,
-  },
-  {
-    id: "concept",
-    slug: "concept",
-    title: "Nàng Thơ",
-    titleVi: "Nàng Thơ · Concept",
-    description: "Dreamy conceptual fine-art portraits where poetry meets light.",
-    descriptionVi: "Những bức chân dung nghệ thuật mơ màng, nơi thơ ca gặp gỡ ánh sáng.",
-    heroImage: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1920&q=85",
-    accentColor: "#C9A961",
-    tone: "Film Grain · Vintage · Mơ Màng",
-    images: conceptImages,
-  },
-  {
-    id: "wedding",
-    slug: "wedding",
-    title: "Cưới",
-    titleVi: "Nhiếp Ảnh Cưới",
-    description: "Love stories told through cinematic imagery and timeless emotion.",
-    descriptionVi: "Những câu chuyện tình yêu được kể qua hình ảnh điện ảnh và cảm xúc trường tồn.",
-    heroImage: "https://images.unsplash.com/photo-1519741497674-611481863552?w=1920&q=85",
-    accentColor: "#EFE8DC",
-    tone: "Trắng Kem · Romantic · Điện Ảnh",
-    images: weddingImages,
-  },
-  {
-    id: "ky-yeu",
-    slug: "ky-yeu",
-    title: "Kỷ Yếu",
-    titleVi: "Ảnh Kỷ Yếu",
-    description: "Youth captured in golden light — memories that last a lifetime.",
-    descriptionVi: "Tuổi trẻ được ghi lại trong ánh nắng vàng — những ký ức tồn tại mãi mãi.",
-    heroImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1920&q=85",
-    accentColor: "#C9A961",
-    tone: "Vàng Nắng · Youthful · Tươi Vui",
-    images: kyYeuImages,
-  },
-];
-
-// ─── Featured images for homepage ────────────────────────────────────────
-export const featuredImages = portfolioCategories
-  .flatMap((cat) => cat.images.filter((img) => img.featured))
-  .slice(0, 8);
 
 // ─── Testimonials ────────────────────────────────────────────────────────
 export const testimonials: Testimonial[] = [
@@ -475,18 +419,6 @@ export const stats = [
   { value: 6, suffix: "", label: "Years", labelVi: "Năm Kinh Nghiệm" },
   { value: 12, suffix: "", label: "Cities", labelVi: "Thành Phố" },
 ];
-
-// ─── Navigation ───────────────────────────────────────────────────────────
-export const navLinks = [
-  { href: "/portfolio", label: "Portfolio", labelVi: "Bộ Sưu Tập" },
-  { href: "/portfolio/ao-dai", label: "Áo Dài", labelVi: "Áo Dài" },
-  { href: "/portfolio/concept", label: "Concept", labelVi: "Nàng Thơ" },
-  { href: "/portfolio/wedding", label: "Wedding", labelVi: "Cưới" },
-  { href: "/portfolio/ky-yeu", label: "Kỷ Yếu", labelVi: "Kỷ Yếu" },
-  { href: "/about", label: "About", labelVi: "Về Tôi" },
-  { href: "/contact", label: "Contact", labelVi: "Liên Hệ" },
-];
-
 // ─── Hero slides ─────────────────────────────────────────────────────────
 // Thay các URL bên dưới bằng link ảnh Cloudinary của bạn
 // Sau khi upload ảnh lên admin, lấy URL từ Cloudinary dashboard

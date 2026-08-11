@@ -71,3 +71,27 @@ export async function PATCH(
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const existing = await db.category.findUnique({ where: { slug: params.slug } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Optional: Delete hero image from Cloudinary if it exists
+    if (existing.heroCloudId) {
+      await deleteFromCloudinary(existing.heroCloudId).catch(console.error);
+    }
+
+    await db.category.delete({ where: { slug: params.slug } });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[category:delete]", err);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
+}

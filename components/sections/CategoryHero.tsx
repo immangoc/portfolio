@@ -23,14 +23,18 @@ export function CategoryHero({ category }: CategoryHeroProps) {
     <div ref={ref} className="relative h-[70vh] md:h-[85vh] overflow-hidden">
       {/* Background */}
       <motion.div className="absolute inset-0" style={{ y }}>
-        <Image
-          src={category.heroImage}
-          alt={category.title}
-          fill
-          className="object-cover"
-          priority
-          sizes="100vw"
-        />
+        {category.heroImage ? (
+          <Image
+            src={category.heroImage}
+            alt={category.title}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-espresso/50" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-espresso/30 via-espresso/20 to-espresso/70" />
       </motion.div>
 

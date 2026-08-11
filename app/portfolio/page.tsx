@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { portfolioCategories } from "@/data/portfolio";
-import { getPhotoCounts, getCategoryHeroImage } from "@/lib/queries";
+import { db } from "@/lib/db";
+import { getPhotoCounts } from "@/lib/queries";
 import { RevealText } from "@/components/ui/RevealText";
 import { Marquee } from "@/components/ui/Marquee";
 
@@ -15,15 +15,15 @@ export const metadata: Metadata = {
 };
 
 export default async function PortfolioPage() {
-  const [counts, ...heroImages] = await Promise.all([
+  const [counts, dbCategories] = await Promise.all([
     getPhotoCounts(),
-    ...portfolioCategories.map((cat) => getCategoryHeroImage(cat.slug)),
+    db.category.findMany({ orderBy: { slug: "asc" } }),
   ]);
 
-  const categories = portfolioCategories.map((cat, i) => ({
+  const categories = dbCategories.map((cat) => ({
     ...cat,
-    heroImage: heroImages[i] ?? cat.heroImage,
-    count: counts[cat.slug] ?? cat.images.length,
+    id: cat.slug,
+    count: counts[cat.slug] ?? 0,
   }));
 
   return (
@@ -62,14 +62,20 @@ export default async function PortfolioPage() {
             }`}
           >
             {/* Image */}
-            <div className="relative h-[60vw] md:h-auto md:min-h-[60vh] overflow-hidden">
-              <Image
-                src={cat.heroImage}
-                alt={cat.title}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105 [direction:ltr]"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
+            <div className="relative h-[60vw] md:h-auto md:min-h-[60vh] overflow-hidden bg-espresso/5">
+              {cat.heroImage ? (
+                <Image
+                  src={cat.heroImage}
+                  alt={cat.title}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105 [direction:ltr]"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-champagne/30 [direction:ltr]">
+                  <span className="text-6xl">📷</span>
+                </div>
+              )}
               <div className="absolute inset-0 bg-espresso/20 group-hover:bg-espresso/10 transition-colors duration-500" />
             </div>
 

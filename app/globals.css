@@ -33,7 +33,6 @@
 }
 
 html {
-  cursor: none;
   overflow-x: hidden;
 }
 
@@ -54,17 +53,7 @@ body {
   color: var(--ivory);
 }
 
-/* ─────────────────────────────────────────────
-   Custom Cursor
-───────────────────────────────────────────── */
-* {
-  cursor: none !important;
-}
 
-.admin-layout,
-.admin-layout * {
-  cursor: auto !important;
-}
 
 /* ─────────────────────────────────────────────
    Typography

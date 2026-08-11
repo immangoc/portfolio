@@ -90,6 +90,7 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
             height={current.height}
             className="max-h-[85vh] w-auto object-contain rounded-sm shadow-2xl"
             priority
+            unoptimized
           />
 
           {/* Info panel toggle */}

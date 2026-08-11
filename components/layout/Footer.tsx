@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { Marquee } from "@/components/ui/Marquee";
 
-export function Footer() {
+import type { NavLinkData } from "@/components/layout/Header";
+
+export function Footer({ navLinks = [] }: { navLinks?: NavLinkData[] }) {
   const pathname = usePathname();
   if (pathname.startsWith("/admin")) return null;
 
@@ -42,15 +43,7 @@ export function Footer() {
             Navigation
           </p>
           <nav className="flex flex-col gap-4">
-            {[
-              { href: "/portfolio", label: "Portfolio" },
-              { href: "/portfolio/ao-dai", label: "Áo Dài" },
-              { href: "/portfolio/concept", label: "Nàng Thơ" },
-              { href: "/portfolio/wedding", label: "Cưới" },
-              { href: "/portfolio/ky-yeu", label: "Kỷ Yếu" },
-              { href: "/about", label: "About" },
-              { href: "/contact", label: "Contact" },
-            ].map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

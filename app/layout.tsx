@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
+import { db } from "@/lib/db";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { CursorFollower } from "@/components/ui/CursorFollower";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
 import { PageTransition } from "@/components/ui/PageTransition";
@@ -71,11 +71,27 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const categories = await db.category.findMany({
+    select: { slug: true, title: true, titleVi: true },
+    orderBy: { slug: "asc" }
+  });
+
+  const navLinks = [
+    { href: "/portfolio", label: "Portfolio", labelVi: "Bộ Sưu Tập" },
+    ...categories.map(c => ({
+      href: `/portfolio/${c.slug}`,
+      label: c.title,
+      labelVi: c.titleVi,
+    })),
+    { href: "/about", label: "About", labelVi: "Về Tôi" },
+    { href: "/contact", label: "Contact", labelVi: "Liên Hệ" },
+  ];
+
   return (
     <html
       lang="vi"
@@ -84,13 +100,12 @@ export default function RootLayout({
     >
       <body className="bg-ivory text-espresso antialiased overflow-x-hidden">
         <SmoothScroll>
-          <CursorFollower />
           <ScrollProgress />
-          <Header />
+          <Header navLinks={navLinks} />
           <PageTransition>
             <main className="min-h-screen">{children}</main>
           </PageTransition>
-          <Footer />
+          <Footer navLinks={navLinks} />
         </SmoothScroll>
       </body>
     </html>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { portfolioCategories, heroSlides as staticSlides } from "@/data/portfolio";
-import { getCategoryHeroImage, photoToPortfolioImage } from "@/lib/queries";
+import { heroSlides as staticSlides } from "@/data/portfolio";
+import { photoToPortfolioImage } from "@/lib/queries";
 import { db } from "@/lib/db";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { CategoryGrid } from "@/components/sections/CategoryGrid";
@@ -19,16 +19,17 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // Fetch all data in parallel
-  const [featuredDbPhotos, heroSlidesDb, ...heroImages] = await Promise.all([
+  const [featuredDbPhotos, heroSlidesDb, dbCategories] = await Promise.all([
     db.photo.findMany({ where: { featured: true }, orderBy: { order: "asc" }, take: 8 }),
     db.heroSlide.findMany({ orderBy: { order: "asc" } }),
-    ...portfolioCategories.map((cat) => getCategoryHeroImage(cat.slug)),
+    db.category.findMany({ orderBy: { slug: "asc" } }),
   ]);
 
-  // Build categories with DB hero images (fallback to static)
-  const categories = portfolioCategories.map((cat, i) => ({
+  // Build categories matching the PortfolioCategory interface format
+  const categories = dbCategories.map(cat => ({
     ...cat,
-    heroImage: heroImages[i] ?? cat.heroImage,
+    id: cat.slug as any,
+    images: [] // images are not loaded eagerly on homepage to save bandwidth
   }));
 
   // Hero slides: use DB slides if available, else static slides

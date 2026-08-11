@@ -4,10 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { navLinks } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
-export function Header() {
+export interface NavLinkData {
+  href: string;
+  label: string;
+  labelVi?: string;
+}
+
+export function Header({ navLinks = [] }: { navLinks?: NavLinkData[] }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();

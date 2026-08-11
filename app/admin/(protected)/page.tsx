@@ -6,14 +6,15 @@ import Link from "next/link";
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
 
-  const [photoCount, categoryStats] = await Promise.all([
+  const [photoCount, categoryStats, featuredCount, bookingCount, pendingBookingCount] = await Promise.all([
     db.photo.count(),
     db.category.findMany({
       include: { _count: { select: { photos: true } } },
     }),
+    db.photo.count({ where: { featured: true } }),
+    db.booking.count(),
+    db.booking.count({ where: { status: "pending" } }),
   ]);
-
-  const featuredCount = await db.photo.count({ where: { featured: true } });
 
   return (
     <div className="p-5 md:p-10">
@@ -29,15 +30,25 @@ export default async function AdminDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         {[
-          { label: "Total Photos", value: photoCount },
-          { label: "Featured", value: featuredCount },
-          { label: "Categories", value: categoryStats.length },
-          { label: "Drafts", value: 0 },
+          { label: "Total Photos", value: photoCount, href: "/admin/photos" },
+          { label: "Categories", value: categoryStats.length, href: "/admin/categories" },
+          { label: "Total Bookings", value: bookingCount, href: "/admin/bookings" },
+          { label: "Pending Bookings", value: pendingBookingCount, highlight: pendingBookingCount > 0, href: "/admin/bookings" },
         ].map((s) => (
-          <div key={s.label} className="bg-white/[0.04] border border-white/[0.06] rounded-lg p-5">
-            <p className="text-3xl font-display text-ivory mb-1">{s.value}</p>
-            <p className="text-xs text-ivory/35 tracking-wider uppercase">{s.label}</p>
-          </div>
+          <Link
+            key={s.label}
+            href={s.href}
+            className={`border rounded-lg p-5 transition-all duration-300 ${
+              s.highlight
+                ? "bg-champagne/10 border-champagne/40 hover:bg-champagne/15"
+                : "bg-white/[0.04] border-white/[0.06] hover:border-white/20"
+            }`}
+          >
+            <p className={`text-3xl font-display mb-1 ${s.highlight ? "text-champagne" : "text-ivory"}`}>
+              {s.value}
+            </p>
+            <p className="text-xs text-ivory/40 tracking-wider uppercase">{s.label}</p>
+          </Link>
         ))}
       </div>
 

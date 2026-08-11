@@ -5,7 +5,7 @@ import { uploadToCloudinary, getBlurDataURL } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/heic"];
-const MAX_SIZE_MB = 20;
+const MAX_SIZE_MB = 100;
 
 export async function GET() {
   const slides = await db.heroSlide.findMany({ orderBy: { order: "asc" } });

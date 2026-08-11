@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { portfolioCategories as staticCategories, PortfolioCategory } from "@/data/portfolio";
+import { PortfolioCategory } from "@/data/portfolio";
 import { RevealText } from "@/components/ui/RevealText";
 import { useInView } from "@/hooks/useInView";
 
@@ -16,7 +16,7 @@ const GRID_CONFIG = [
 ];
 
 export function CategoryGrid({ categories: categoriesProp }: { categories?: PortfolioCategory[] } = {}) {
-  const portfolioCategories = categoriesProp && categoriesProp.length > 0 ? categoriesProp : staticCategories;
+  const portfolioCategories = categoriesProp && categoriesProp.length > 0 ? categoriesProp : [];
   const { ref, inView } = useInView({ threshold: 0.1 });
 
   return (
@@ -59,7 +59,7 @@ export function CategoryGrid({ categories: categoriesProp }: { categories?: Port
           <CategoryCard
             key={category.id}
             category={category}
-            config={GRID_CONFIG[i]}
+            config={GRID_CONFIG[i % GRID_CONFIG.length]}
             index={i}
             inView={inView}
           />
@@ -127,13 +127,17 @@ function CategoryCard({
         <Link href={`/portfolio/${category.slug}`} className="block w-full h-full group">
           <div className="relative w-full h-full overflow-hidden">
             {/* Image */}
-            <Image
-              src={category.heroImage}
-              alt={category.title}
-              fill
-              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
-              sizes="(max-width: 768px) 100vw, 60vw"
-            />
+            {category.heroImage ? (
+              <Image
+                src={category.heroImage}
+                alt={category.title}
+                fill
+                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+                sizes="(max-width: 768px) 100vw, 60vw"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-espresso/30" />
+            )}
 
             {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-espresso/70 via-espresso/10 to-transparent transition-opacity duration-500 group-hover:opacity-80" />

@@ -4,13 +4,13 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { AnimatePresence } from "framer-motion";
-import { featuredImages as staticFeatured, PortfolioImage } from "@/data/portfolio";
+import { PortfolioImage } from "@/data/portfolio";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { RevealText } from "@/components/ui/RevealText";
 import { Marquee } from "@/components/ui/Marquee";
 
 export function FeaturedWork({ images: imagesProp }: { images?: PortfolioImage[] } = {}) {
-  const featuredImages = imagesProp && imagesProp.length > 0 ? imagesProp : staticFeatured;
+  const featuredImages = imagesProp && imagesProp.length > 0 ? imagesProp : [];
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 

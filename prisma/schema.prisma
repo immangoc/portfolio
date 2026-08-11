@@ -70,3 +70,15 @@ model Category {
   tone          String
   photos        Photo[]
 }
+
+model Booking {
+  id        String   @id @default(cuid())
+  name      String
+  contact   String
+  concept   String
+  date      String?
+  message   String?
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

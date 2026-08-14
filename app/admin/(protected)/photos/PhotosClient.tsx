@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Category, Photo } from "@prisma/client";
+import { compressImage } from "@/lib/utils";
 
 const MOODS = ["ethereal", "romantic", "youthful", "cinematic", "traditional", "vintage"];
 
@@ -135,22 +136,20 @@ function SortablePhoto({ photo, isHero, onEdit, onDelete, onToggleFeatured, onSe
         <button
           onClick={() => onSetHero(photo)}
           title="Set as category hero image"
-          className={`py-1.5 px-2 text-[10px] tracking-widest uppercase rounded transition-colors border ${
-            isHero
+          className={`py-1.5 px-2 text-[10px] tracking-widest uppercase rounded transition-colors border ${isHero
               ? "border-bronze/50 text-bronze bg-bronze/10"
               : "border-white/[0.06] text-ivory/40 hover:text-bronze hover:border-bronze/30"
-          }`}
+            }`}
         >
           ◈
         </button>
         <button
           onClick={() => onToggleFeatured(photo)}
           title="Toggle featured"
-          className={`py-1.5 px-2 text-[10px] tracking-widest uppercase rounded transition-colors border ${
-            photo.featured
+          className={`py-1.5 px-2 text-[10px] tracking-widest uppercase rounded transition-colors border ${photo.featured
               ? "border-champagne/40 text-champagne hover:bg-champagne/10"
               : "border-white/[0.06] text-ivory/40 hover:text-champagne hover:border-champagne/30"
-          }`}
+            }`}
         >
           ★
         </button>
@@ -228,36 +227,91 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
       let done = 0;
       const results: Photo[] = [];
 
-      for (const file of files) {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("categorySlug", activeCategory);
-        fd.append("alt", meta.alt || file.name.replace(/\.[^.]+$/, ""));
-        fd.append("title", meta.title);
-        fd.append("location", meta.location);
-        fd.append("year", String(meta.year));
-        fd.append("mood", JSON.stringify(meta.mood));
-        fd.append("camera", meta.camera);
-        fd.append("lens", meta.lens);
-        if (meta.iso) fd.append("iso", meta.iso);
-        fd.append("featured", String(isHeroTab ? true : meta.featured));
+      try {
+        for (const rawFile of files) {
+          const file = await compressImage(rawFile);
+          const timestamp = Math.round(new Date().getTime() / 1000);
+          const folder = `portfolio/${activeCategory}`;
 
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        if (data.photo) results.push(data.photo);
+          // 1. Get signature from server
+          const signRes = await fetch("/api/upload/sign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ folder, timestamp }),
+          });
 
-        done++;
-        setUploadProgress(Math.round((done / files.length) * 100));
+          if (!signRes.ok) {
+            const errorData = await signRes.json().catch(() => ({}));
+            throw new Error(errorData.error || "Failed to generate upload signature");
+          }
+
+          const { signature, apiKey, cloudName } = await signRes.json();
+
+          // 2. Upload directly to Cloudinary
+          const cloudinaryFormData = new FormData();
+          cloudinaryFormData.append("file", file);
+          cloudinaryFormData.append("api_key", apiKey);
+          cloudinaryFormData.append("timestamp", String(timestamp));
+          cloudinaryFormData.append("signature", signature);
+          cloudinaryFormData.append("folder", folder);
+
+          const cloudinaryRes = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            {
+              method: "POST",
+              body: cloudinaryFormData,
+            }
+          );
+
+          if (!cloudinaryRes.ok) {
+            const cError = await cloudinaryRes.json().catch(() => ({}));
+            throw new Error(cError.error?.message || "Failed to upload to Cloudinary");
+          }
+
+          const cloudinaryData = await cloudinaryRes.json();
+
+          // 3. Save to database via our route
+          const fd = new FormData();
+          fd.append("cloudinaryId", cloudinaryData.public_id);
+          fd.append("src", cloudinaryData.secure_url);
+          fd.append("width", String(cloudinaryData.width));
+          fd.append("height", String(cloudinaryData.height));
+          fd.append("categorySlug", activeCategory);
+          fd.append("alt", meta.alt || file.name.replace(/\.[^.]+$/, ""));
+          fd.append("title", meta.title);
+          fd.append("location", meta.location);
+          fd.append("year", String(meta.year));
+          fd.append("mood", JSON.stringify(meta.mood));
+          fd.append("camera", meta.camera);
+          fd.append("lens", meta.lens);
+          if (meta.iso) fd.append("iso", meta.iso);
+          fd.append("featured", String(isHeroTab ? true : meta.featured));
+
+          const res = await fetch("/api/upload", { method: "POST", body: fd });
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || "Failed to save photo metadata");
+          }
+          const data = await res.json();
+          if (data.photo) results.push(data.photo);
+
+          done++;
+          setUploadProgress(Math.round((done / files.length) * 100));
+        }
+
+        setPhotos((prev) => [...prev, ...results]);
+        showToast(`Uploaded ${results.length} photo${results.length > 1 ? "s" : ""}`);
+      } catch (err: any) {
+        console.error(err);
+        showToast(err.message || "Upload failed", "err");
+      } finally {
+        setUploading(false);
+        setPreviewFiles([]);
+        setMeta(defaultMeta);
+        startTransition(() => router.refresh());
       }
-
-      setPhotos((prev) => [...prev, ...results]);
-      setUploading(false);
-      setPreviewFiles([]);
-      setMeta(defaultMeta);
-      showToast(`Uploaded ${results.length} photo${results.length > 1 ? "s" : ""}`);
-      startTransition(() => router.refresh());
     },
-    [activeCategory, meta, router]
+    [activeCategory, meta, isHeroTab, router]
   );
 
   function handleDrop(e: React.DragEvent) {
@@ -336,17 +390,73 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
   async function handleSlideUpload(files: File[]) {
     if (!files.length) return;
     setSlideUploading(true);
-    for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("alt", file.name.replace(/\.[^.]+$/, ""));
-      const res = await fetch("/api/slides", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.slide) setSlides((prev) => [...prev, data.slide]);
+    try {
+      for (const rawFile of files) {
+        const file = await compressImage(rawFile);
+        const timestamp = Math.round(new Date().getTime() / 1000);
+        const folder = "portfolio/hero-slides";
+
+        // 1. Get signature
+        const signRes = await fetch("/api/upload/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ folder, timestamp }),
+        });
+
+        if (!signRes.ok) {
+          const errorData = await signRes.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to generate slide signature");
+        }
+
+        const { signature, apiKey, cloudName } = await signRes.json();
+
+        // 2. Upload to Cloudinary
+        const cloudinaryFormData = new FormData();
+        cloudinaryFormData.append("file", file);
+        cloudinaryFormData.append("api_key", apiKey);
+        cloudinaryFormData.append("timestamp", String(timestamp));
+        cloudinaryFormData.append("signature", signature);
+        cloudinaryFormData.append("folder", folder);
+
+        const cloudinaryRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: cloudinaryFormData,
+          }
+        );
+
+        if (!cloudinaryRes.ok) {
+          const cError = await cloudinaryRes.json().catch(() => ({}));
+          throw new Error(cError.error?.message || "Failed to upload slide to Cloudinary");
+        }
+
+        const cloudinaryData = await cloudinaryRes.json();
+
+        // 3. Save slide to DB
+        const fd = new FormData();
+        fd.append("cloudinaryId", cloudinaryData.public_id);
+        fd.append("src", cloudinaryData.secure_url);
+        fd.append("alt", file.name.replace(/\.[^.]+$/, ""));
+
+        const res = await fetch("/api/slides", { method: "POST", body: fd });
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to save slide metadata");
+        }
+        const data = await res.json();
+        if (data.slide) {
+          setSlides((prev) => [...prev, data.slide].sort((a, b) => a.order - b.order));
+        }
+      }
+      showToast("Slide uploaded");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Failed to upload slide", "err");
+    } finally {
+      setSlideUploading(false);
+      startTransition(() => router.refresh());
     }
-    setSlideUploading(false);
-    showToast("Slide uploaded");
-    startTransition(() => router.refresh());
   }
 
   async function handleSlideDelete(slide: HeroSlide) {
@@ -433,11 +543,10 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-300 ${
-              dragOver
+            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-300 ${dragOver
                 ? "border-champagne/60 bg-champagne/5"
                 : "border-white/[0.1] hover:border-white/[0.2] bg-white/[0.02]"
-            }`}
+              }`}
           >
             <input
               ref={fileInputRef}
@@ -534,11 +643,10 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
                         : [...prev.mood, m],
                     }))
                   }
-                  className={`px-2 py-1 text-[9px] rounded tracking-widest uppercase transition-colors ${
-                    meta.mood.includes(m)
+                  className={`px-2 py-1 text-[9px] rounded tracking-widest uppercase transition-colors ${meta.mood.includes(m)
                       ? "bg-champagne/20 text-champagne border border-champagne/30"
                       : "bg-white/[0.04] text-ivory/30 border border-white/[0.06] hover:text-ivory/60"
-                  }`}
+                    }`}
                 >
                   {m}
                 </button>
@@ -550,14 +658,12 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
           <label className="flex items-center gap-3 cursor-pointer">
             <div
               onClick={() => setMeta((m) => ({ ...m, featured: !m.featured }))}
-              className={`w-8 h-4 rounded-full transition-colors duration-300 relative ${
-                meta.featured ? "bg-champagne" : "bg-white/20"
-              }`}
+              className={`w-8 h-4 rounded-full transition-colors duration-300 relative ${meta.featured ? "bg-champagne" : "bg-white/20"
+                }`}
             >
               <span
-                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${
-                  meta.featured ? "translate-x-4" : "translate-x-0.5"
-                }`}
+                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${meta.featured ? "translate-x-4" : "translate-x-0.5"
+                  }`}
               />
             </div>
             <span className="text-[10px] text-ivory/40 uppercase tracking-widest">Featured</span>
@@ -572,9 +678,8 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
           {/* Slideshow tab */}
           <button
             onClick={() => setActiveCategory(SLIDESHOW_TAB)}
-            className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${
-              isSlideshowTab ? "text-champagne" : "text-ivory/35 hover:text-ivory/70"
-            }`}
+            className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${isSlideshowTab ? "text-champagne" : "text-ivory/35 hover:text-ivory/70"
+              }`}
           >
             ▶ Slideshow
             <span className="ml-1.5 text-[10px] opacity-50">({slides.length})</span>
@@ -583,9 +688,8 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
           {/* Hero tab */}
           <button
             onClick={() => setActiveCategory(HERO_TAB)}
-            className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${
-              isHeroTab ? "text-bronze" : "text-ivory/35 hover:text-ivory/70"
-            }`}
+            className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${isHeroTab ? "text-bronze" : "text-ivory/35 hover:text-ivory/70"
+              }`}
           >
             ★ Featured
             <span className="ml-1.5 text-[10px] opacity-50">({photos.filter((p) => p.featured).length})</span>
@@ -598,11 +702,10 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
               <button
                 key={cat.slug}
                 onClick={() => setActiveCategory(cat.slug)}
-                className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${
-                  activeCategory === cat.slug
+                className={`px-4 py-4 text-xs transition-colors relative whitespace-nowrap ${activeCategory === cat.slug
                     ? "text-champagne"
                     : "text-ivory/35 hover:text-ivory/70"
-                }`}
+                  }`}
               >
                 {cat.title}
                 <span className="ml-1.5 text-[10px] opacity-50">({count})</span>
@@ -776,19 +879,18 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
                         setEditPhoto((p) =>
                           p
                             ? {
-                                ...p,
-                                mood: p.mood.includes(m)
-                                  ? p.mood.filter((x) => x !== m)
-                                  : [...p.mood, m],
-                              }
+                              ...p,
+                              mood: p.mood.includes(m)
+                                ? p.mood.filter((x) => x !== m)
+                                : [...p.mood, m],
+                            }
                             : p
                         )
                       }
-                      className={`px-2 py-1 text-[9px] rounded tracking-widest uppercase transition-colors ${
-                        editPhoto.mood.includes(m)
+                      className={`px-2 py-1 text-[9px] rounded tracking-widest uppercase transition-colors ${editPhoto.mood.includes(m)
                           ? "bg-champagne/20 text-champagne border border-champagne/30"
                           : "bg-white/[0.04] text-ivory/30 border border-white/[0.06] hover:text-ivory/60"
-                      }`}
+                        }`}
                     >
                       {m}
                     </button>
@@ -848,9 +950,8 @@ export function PhotosClient({ categories, initialPhotos, defaultCategory, heroM
 
       {/* ── Toast ── */}
       {toast && (
-        <div className={`fixed bottom-[5.5rem] md:bottom-6 right-4 z-50 px-4 py-3 rounded-lg text-xs tracking-wider ${
-          toast.type === "ok" ? "bg-champagne text-espresso" : "bg-red-500 text-white"
-        }`}>
+        <div className={`fixed bottom-[5.5rem] md:bottom-6 right-4 z-50 px-4 py-3 rounded-lg text-xs tracking-wider ${toast.type === "ok" ? "bg-champagne text-espresso" : "bg-red-500 text-white"
+          }`}>
           {toast.msg}
         </div>
       )}

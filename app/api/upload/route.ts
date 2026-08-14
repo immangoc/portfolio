@@ -18,17 +18,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
-  const file = formData.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  if (!ALLOWED_TYPES.includes(file.type))
-    return NextResponse.json({ error: "File type not supported" }, { status: 400 });
-  if (file.size > MAX_SIZE_MB * 1024 * 1024)
-    return NextResponse.json({ error: `File too large (max ${MAX_SIZE_MB}MB)` }, { status: 400 });
+  const cloudinaryId = formData.get("cloudinaryId") as string | null;
+  const src = formData.get("src") as string | null;
+  const widthVal = formData.get("width") as string | null;
+  const heightVal = formData.get("height") as string | null;
 
   const categorySlug = formData.get("categorySlug") as string;
   if (!categorySlug) return NextResponse.json({ error: "Category required" }, { status: 400 });
 
-  const alt = (formData.get("alt") as string) || file.name.replace(/\.[^.]+$/, "");
   const title = (formData.get("title") as string) || undefined;
   const location = (formData.get("location") as string) || undefined;
   const year = parseInt(formData.get("year") as string) || new Date().getFullYear();
@@ -46,12 +43,44 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    let uploaded: {
+      public_id: string;
+      secure_url: string;
+      width: number;
+      height: number;
+    };
 
-    const uploaded = await uploadToCloudinary(buffer, {
-      folder: `portfolio/${categorySlug}`,
-    });
+    let alt = (formData.get("alt") as string) || "";
+
+    if (cloudinaryId && src && widthVal && heightVal) {
+      uploaded = {
+        public_id: cloudinaryId,
+        secure_url: src,
+        width: parseInt(widthVal),
+        height: parseInt(heightVal),
+      };
+      if (!alt) {
+        alt = "Photo";
+      }
+    } else {
+      const file = formData.get("file") as File | null;
+      if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      if (!ALLOWED_TYPES.includes(file.type))
+        return NextResponse.json({ error: "File type not supported" }, { status: 400 });
+      if (file.size > MAX_SIZE_MB * 1024 * 1024)
+        return NextResponse.json({ error: `File too large (max ${MAX_SIZE_MB}MB)` }, { status: 400 });
+
+      if (!alt) {
+        alt = file.name.replace(/\.[^.]+$/, "");
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      uploaded = await uploadToCloudinary(buffer, {
+        folder: `portfolio/${categorySlug}`,
+      });
+    }
 
     const blurDataURL = getBlurDataURL(uploaded.public_id);
     const existingCount = await db.photo.count({ where: { categorySlug } });

@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { compressImage } from "@/lib/utils";
 
 interface AboutData {
   photoUrl?: string | null;
@@ -63,16 +64,72 @@ export function AboutClient({
   async function handlePhotoChange(file: File) {
     setUploading(true);
     setPhotoPreview(URL.createObjectURL(file));
-    const fd = new FormData();
-    fd.append("photo", file);
-    const res = await fetch("/api/about", { method: "PATCH", body: fd });
-    if (res.ok) {
-      showToast("Ảnh đã cập nhật");
-      router.refresh();
-    } else {
-      showToast("Upload thất bại", "err");
+
+    try {
+      // 1. Compress image
+      const compressedFile = await compressImage(file);
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const folder = "portfolio/about";
+
+      // 2. Get signature
+      const signRes = await fetch("/api/upload/sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder, timestamp }),
+      });
+
+      if (!signRes.ok) {
+        const errorData = await signRes.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to generate upload signature");
+      }
+
+      const { signature, apiKey, cloudName } = await signRes.json();
+
+      // 3. Upload directly to Cloudinary
+      const cloudinaryFormData = new FormData();
+      cloudinaryFormData.append("file", compressedFile);
+      cloudinaryFormData.append("api_key", apiKey);
+      cloudinaryFormData.append("timestamp", String(timestamp));
+      cloudinaryFormData.append("signature", signature);
+      cloudinaryFormData.append("folder", folder);
+
+      const cloudinaryRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: cloudinaryFormData,
+        }
+      );
+
+      if (!cloudinaryRes.ok) {
+        const cError = await cloudinaryRes.json().catch(() => ({}));
+        throw new Error(cError.error?.message || "Failed to upload to Cloudinary");
+      }
+
+      const cloudinaryData = await cloudinaryRes.json();
+
+      // 4. Save to database via JSON update
+      const res = await fetch("/api/about", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photoUrl: cloudinaryData.secure_url,
+          photoCloudId: cloudinaryData.public_id,
+        }),
+      });
+
+      if (res.ok) {
+        showToast("Ảnh đã cập nhật");
+        router.refresh();
+      } else {
+        showToast("Lưu thông tin ảnh thất bại", "err");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err instanceof Error ? err.message : "Upload thất bại", "err");
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
   }
 
   async function handleSave() {

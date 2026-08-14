@@ -48,10 +48,17 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const allowed = ["quote", "bio1", "bio2", "bio3"];
+  const allowed = ["quote", "bio1", "bio2", "bio3", "photoUrl", "photoCloudId"];
   const data = Object.fromEntries(allowed.filter((k) => k in body).map((k) => [k, body[k]]));
 
   try {
+    const existing = await db.aboutContent.findUnique({ where: { id: "main" } });
+
+    // Delete old profile photo from Cloudinary if a new one is set
+    if (data.photoCloudId && existing?.photoCloudId && existing.photoCloudId !== data.photoCloudId) {
+      await deleteFromCloudinary(existing.photoCloudId).catch(console.error);
+    }
+
     const content = await db.aboutContent.upsert({
       where: { id: "main" },
       update: data,

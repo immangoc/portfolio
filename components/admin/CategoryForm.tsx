@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { compressImage } from "@/lib/utils";
 
 export interface CategoryFormData {
   slug: string;
@@ -53,32 +54,72 @@ export function CategoryForm({ initialData, isEdit = false }: Props) {
     setIsSubmitting(true);
 
     try {
-      // 1. Save category data first
+      let finalHeroImage = formData.heroImage;
+      let finalHeroCloudId = formData.heroCloudId;
+
+      if (file) {
+        // 1. Compress image
+        const compressedFile = await compressImage(file);
+        const timestamp = Math.round(new Date().getTime() / 1000);
+        const folder = "portfolio/heroes";
+
+        // 2. Get signature
+        const signRes = await fetch("/api/upload/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ folder, timestamp }),
+        });
+
+        if (!signRes.ok) {
+          const errorData = await signRes.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to generate upload signature");
+        }
+
+        const { signature, apiKey, cloudName } = await signRes.json();
+
+        // 3. Upload directly to Cloudinary
+        const cloudinaryFormData = new FormData();
+        cloudinaryFormData.append("file", compressedFile);
+        cloudinaryFormData.append("api_key", apiKey);
+        cloudinaryFormData.append("timestamp", String(timestamp));
+        cloudinaryFormData.append("signature", signature);
+        cloudinaryFormData.append("folder", folder);
+
+        const cloudinaryRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: cloudinaryFormData,
+          }
+        );
+
+        if (!cloudinaryRes.ok) {
+          const cError = await cloudinaryRes.json().catch(() => ({}));
+          throw new Error(cError.error?.message || "Failed to upload to Cloudinary");
+        }
+
+        const cloudinaryData = await cloudinaryRes.json();
+        finalHeroImage = cloudinaryData.secure_url;
+        finalHeroCloudId = cloudinaryData.public_id;
+      }
+
+      // 4. Save category data
       const url = isEdit ? `/api/categories/${initialData!.slug}` : "/api/categories";
       const method = isEdit ? "PATCH" : "POST";
+
+      const submitData = {
+        ...formData,
+        heroImage: finalHeroImage,
+        heroCloudId: finalHeroCloudId,
+      };
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       if (!res.ok) throw new Error("Failed to save category data");
-      
-      const savedCategory = await res.json();
-
-      // 3. Upload image via PATCH if file is selected
-      if (file) {
-        const imageFormData = new FormData();
-        imageFormData.append("heroImage", file);
-        
-        const uploadRes = await fetch(`/api/categories/${savedCategory.slug}`, {
-          method: "PATCH",
-          body: imageFormData,
-        });
-
-        if (!uploadRes.ok) throw new Error("Failed to upload image");
-      }
 
       router.push("/admin/categories");
       router.refresh();

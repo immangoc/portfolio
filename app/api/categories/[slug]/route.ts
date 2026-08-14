@@ -64,6 +64,14 @@ export async function PATCH(
     return NextResponse.json({ error: "No valid fields" }, { status: 400 });
 
   try {
+    const existing = await db.category.findUnique({ where: { slug: params.slug } });
+    if (!existing) return NextResponse.json({ error: "Category not found" }, { status: 404 });
+
+    // Delete old hero image from Cloudinary if a new one is set
+    if (data.heroCloudId && existing.heroCloudId && existing.heroCloudId !== data.heroCloudId) {
+      await deleteFromCloudinary(existing.heroCloudId).catch(console.error);
+    }
+
     const category = await db.category.update({ where: { slug: params.slug }, data });
     return NextResponse.json(category);
   } catch (err) {
